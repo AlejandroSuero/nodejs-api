@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A NodeJS Rest API",
   "main": "src/app.ts",
+  "type": "module",
   "scripts": {
     "start": "node ./src/app.js",
     "dev": "node --watch ./src/app.js",
