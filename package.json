@@ -4,6 +4,7 @@
   "description": "A NodeJS Rest API",
   "main": "src/app.ts",
   "scripts": {
+    "start": "node ./src/app.js",
     "dev": "node --watch ./src/app.js",
     "lint": "pnpx eslint './**/*.{js,ts,jsx,tsx}'",
     "lint:fix": "pnpx eslint './**/*.{js,ts,jsx,tsx}'"
