@@ -1,0 +1,250 @@
+import mysql from "mysql2/promise"
+
+/** @type {mysql.ConnectionOptions} */
+const config = {
+  host: "localhost",
+  user: "root",
+  port: 3306,
+  password: "",
+  database: "moviesDB"
+}
+
+const connection = await mysql.createConnection(config)
+
+/**
+ * @typedef {
+    "Action" |
+    "Fantasy" |
+    "Adventure" |
+    "Sci-Fi" |
+    "Terror" |
+    "Crime" |
+    "Drama" |
+    "Thriller" |
+    "Comedy" |
+    "Horror"
+    } Genre
+ */
+
+/** @typedef {{
+ *  id: string
+ *  title: string
+ *  director: string
+ *  duration: number
+ *  year: number
+ *  genre: Genre[]
+ *  poster: string
+ *  rate?: number
+ * }} Movie */
+
+/** @typedef {{
+ *  title: string
+ *  director: string
+ *  duration: number
+ *  year: number
+ *  genre: Genre[]
+ *  poster: string
+ *  rate?: number
+ * }} MovieData */
+export class MovieModel {
+  static async getGenres(movies) {
+    const [genresTable] = await connection.query(
+      `SELECT genre.name, BIN_TO_UUID(movie_genres.movie_id) as id
+FROM genre
+JOIN movie_genres ON genre.id = movie_genres.genre_id;`
+    )
+    await movies.forEach((movie, index) => {
+      movie.genre = []
+      genresTable.forEach(data => {
+        if (movie.id === data.id) {
+          movie.genre.push(data.name)
+        }
+      })
+      movies[index] = movie
+    })
+  }
+
+  /**
+  * Get All movies by genre
+  *
+  * @param {{genre: string}} genre Movie genre to search
+  * @returns {Promise<Movie[]>} If there is a genre, returns an array of movies with that
+  * genre. Otherwise returns the movies
+  */
+  static async getAll({ genre }) {
+    if (genre) {
+      const sql = "SELECT id, name FROM genre WHERE LOWER(name) = ?;"
+      const lowerCaseGenre = genre.toLowerCase()
+      const [genres] = await connection.query(sql, [lowerCaseGenre])
+
+      if (genres.length === 0) return []
+
+      const [{ id }] = genres
+
+      const joinSQL = `
+SELECT BIN_TO_UUID(movie.id) id, movie.title, movie.director, movie.year, movie.duration, movie.poster, movie.rate
+FROM movie
+INNER JOIN movie_genres ON movie_genres.movie_id = movie.id
+INNER JOIN genre ON movie_genres.genre_id = genre.id
+WHERE genre.id = ?
+GROUP BY movie.id;
+  `
+      const [movies] = await connection.query(joinSQL, [id])
+      await this.getGenres(movies)
+
+      return movies
+    }
+    const sql = "SELECT BIN_TO_UUID(id) id, title, year, director, duration, poster, rate FROM movie;"
+    const [movies] = await connection.query(sql)
+    try {
+      await this.getGenres(movies)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error while relating genres")
+    }
+
+    return movies
+  }
+
+  /**
+  * Get movie by id
+  *
+  * @param {{id: string}} UUID of the movie to search
+  * @returns {Promise<Movie[]>} The movie with that id
+  */
+  static async getById({ id }) {
+    const sql = `
+      SELECT BIN_TO_UUID(id) id, title, year, director, duration, poster, rate
+      FROM movie
+      WHERE id = UUID_TO_BIN(?);
+    `
+    const [movies] = await connection.query(sql, [id])
+
+    if (movies.length === 0) return []
+    try {
+      await this.getGenres(movies)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error while relating genres")
+    }
+
+    return movies[0]
+  }
+
+  /**
+  * Create a new movie and inserts the movie
+  *
+  * @param {MovieData} Movie data for the creation
+  * @returns {Promise<Movie>} Created movie
+  */
+  static async create({ input }) {
+    const {
+      genre,
+      title,
+      director,
+      year,
+      duration,
+      poster,
+      rate
+    } = input
+    const [uuidResult] = await connection.query("SELECT UUID() uuid;")
+    const [{ uuid }] = uuidResult
+
+    const sql = `INSERT INTO movie (id, title, year, director, duration, poster, rate) VALUES
+(UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?);`
+    try {
+      await connection.query(sql, [uuid, title, year, director, duration, poster, rate])
+    } catch (e) {
+      throw new Error("Error while creating movie")
+    }
+
+    const movieSQL = `SELECT BIN_TO_UUID(id) id, title, year, director, duration, poster, rate
+FROM movie WHERE id = UUID_TO_BIN(?);`
+    const [movies] = await connection.query(movieSQL, [uuid])
+    genre.forEach(async (genre) => {
+      const sql = `INSERT INTO movie_genres (movie_id, genre_id) VALUES
+((SELECT id FROM movie WHERE title = '${movies[0].title}'),
+(SELECT id FROM genre WHERE LOWER(name) = ?));`
+      try {
+        await connection.query(sql, [genre.toLowerCase()])
+      } catch (e) {
+        console.erro(e)
+        throw new Error("Error while relating movie_genres")
+      }
+    })
+    try {
+      await this.getGenres(movies)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error while relating genres")
+    }
+
+    return movies[0]
+  }
+
+  /**
+  * Updates a movie by id and inserts the movie in the place
+  *
+  * @param {{id:string}} UUID of the movie for the update
+  * @param {MovieData} Movie data for the updated fields
+  * @returns {Promise<Movie>} Updated movie
+  */
+  static async update({ id, input }) {
+    let sql = "UPDATE movie SET "
+    const colsToUpdate = []
+    for (const key in input) {
+      sql += `${key} = ?,`
+      colsToUpdate.push(input[key])
+    }
+    sql = sql.slice(0, -1)
+    sql += "\nWHERE id = UUID_TO_BIN(?);"
+    colsToUpdate.push(id)
+    try {
+      await connection.query(sql, colsToUpdate)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error ocurred while updating movie")
+    }
+    const movie = await this.getById({ id })
+    const movies = [movie]
+    try {
+      await this.getGenres(movies)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error while relating genres")
+    }
+    return movies[0]
+  }
+
+  /**
+  * Delets a movie
+  *
+  * @param {{id: string}} UUID of the movie for deletion
+  * @returns {Promise<Boolean>} Deleted movie
+  */
+  static async delete({ id }) {
+    const sql = "DELETE FROM movie WHERE id = UUID_TO_BIN(?)"
+    const movie = await this.getById({ id })
+    const movies = [movie]
+    try {
+      await this.getGenres(movies)
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error while relating genres")
+    }
+    try {
+      await connection.query(sql, [id])
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error ocurred while deleting movie")
+    }
+    const movieGenreSQL = "DELETE FROM movie_genres WHERE movie_id = UUID_TO_BIN(?)"
+    try {
+      await connection.query(movieGenreSQL, [id])
+    } catch (e) {
+      console.error(e)
+      throw new Error("Error ocurred while deleting movie_genres")
+    }
+    return movies[0]
+  }
+}
