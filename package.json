@@ -5,12 +5,12 @@
   "main": "src/app.ts",
   "type": "module",
   "scripts": {
-    "start": "pnpm install && pnpm run start:mysql",
+    "start": "npm install && npm run start:mysql",
     "start:mysql": "node ./src/server-mysql.js",
     "dev": "node --watch ./src/server-local.js",
     "dev:mysql": "node --watch ./src/server-mysql.js",
-    "lint": "pnpx eslint './**/*.{js,ts,jsx,tsx}'",
-    "lint:fix": "pnpx eslint './**/*.{js,ts,jsx,tsx}'"
+    "lint": "npx eslint './**/*.{js,ts,jsx,tsx}'",
+    "lint:fix": "npx eslint './**/*.{js,ts,jsx,tsx}'"
   },
   "keywords": [
     "NodeJS",
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "express": "4.18.2",
-    "mysql2": "^3.6.1",
+    "mysql2": "3.6.1",
     "zod": "3.22.2"
   }
 }
