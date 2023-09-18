@@ -1,22 +1,25 @@
-import { MovieModel } from "../models/mysql/movie.js"
 import { validateMovie, validatePartialMovie } from "../schemas/movies.js"
 
 export class MovieController {
+  constructor({ movieModel }) {
+    this.movieModel = movieModel
+  }
+
   /**
   * Get all movies by genre from the query parameters and sends a response
   */
-  static async getAll(req, res) {
+  getAll = async (req, res) => {
     const { genre } = req.query
-    const movies = await MovieModel.getAll({ genre })
+    const movies = await this.movieModel.getAll({ genre })
     res.json(movies)
   }
 
   /**
   * Gets a movie by id from the endpoint and sends a response
   */
-  static async getById(req, res) {
+  getById = async (req, res) => {
     const { id } = req.params
-    const movie = await MovieModel.getById({ id })
+    const movie = await this.movieModel.getById({ id })
     if (movie.length !== 0) return res.json(movie)
 
     res.status(404).json({ message: "Movie not found" })
@@ -25,13 +28,13 @@ export class MovieController {
   /**
   * Creates a new movie if validations are correct and sends a response
   */
-  static async create(req, res) {
+  create = async (req, res) => {
     const result = validateMovie(req.body)
 
     if (result.error) {
       res.status(422).json({ error: JSON.parse(result.error.message) })
     }
-    const newMovie = await MovieModel.create({ input: result.data })
+    const newMovie = await this.movieModel.create({ input: result.data })
 
     res.status(201).json(newMovie)
   }
@@ -40,7 +43,7 @@ export class MovieController {
   * Updates a movie with the id from the endpoint and the data from the body
   * and sends a response
   */
-  static async update(req, res) {
+  update = async (req, res) => {
     const result = validatePartialMovie(req.body)
 
     if (result.error) {
@@ -49,7 +52,7 @@ export class MovieController {
 
     const { id } = req.params
 
-    const updateMovie = await MovieModel.update({ id, input: result.data })
+    const updateMovie = await this.movieModel.update({ id, input: result.data })
     if (updateMovie === null) { return res.status(404).json({ message: "Movie not found" }) }
 
     res.json(updateMovie)
@@ -58,12 +61,12 @@ export class MovieController {
   /**
   * Deletes a movie with the id from the endpoint and sends a response
   */
-  static async delete(req, res) {
+  delete = async (req, res) => {
     const { id } = req.params
-    const movieDeleted = await MovieModel.delete({ id })
+    const movieDeleted = await this.movieModel.delete({ id })
 
-    if (!movieDeleted) { return res.status(404).json({ message: "Movie not found" }) }
+    if (movieDeleted.length === 0) { return res.status(404).json({ message: "Movie not found" }) }
 
-    return res.json({ message: "Movie deleted" })
+    return res.json({ message: "Movie deleted", movie: movieDeleted })
   }
 }

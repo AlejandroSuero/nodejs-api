@@ -4,20 +4,21 @@ import { readJSON } from "../utils.js"
 
 /**
  * @typedef {
-    "Action" |
-    "Fantasy" |
-    "Adventure" |
-    "Sci-Fi" |
-    "Terror" |
-    "Crime" |
-    "Drama" |
-    "Thriller" |
-    "Comedy" |
-    "Horror"
-    } Genre
+*  "Action" |
+*  "Fantasy" |
+*  "Adventure" |
+*  "Sci-Fi" |
+*  "Terror" |
+*  "Crime" |
+*  "Drama" |
+*  "Thriller" |
+*  "Comedy" |
+*  "Horror"
+*  } Genre
  */
 
-/** @typedef {{
+/**
+ * @typedef {{
  *  id: string
  *  title: string
  *  director: string
@@ -26,9 +27,11 @@ import { readJSON } from "../utils.js"
  *  genre: Genre[]
  *  poster: string
  *  rate?: number
- * }} Movie */
+ * }} Movie
+ */
 
-/** @typedef {{
+/**
+ * @typedef {{
  *  title: string
  *  director: string
  *  duration: number
@@ -36,7 +39,8 @@ import { readJSON } from "../utils.js"
  *  genre: Genre[]
  *  poster: string
  *  rate?: number
- * }} MovieData */
+ * }} MovieData
+ */
 
 /** @type {Movie[]} */
 const movies = readJSON("./movies.json")
@@ -65,8 +69,13 @@ export class MovieModel {
   * @returns {Promise<Movie[]>} The movie with that id
   */
   static async getById({ id }) {
-    const movie = movies.find(movie => movie.id === id)
-    return movie
+    /** @type {number} */
+    const movieIndex = movies.findIndex(movie => movie.id === id)
+
+    if (movieIndex < 0) { return [] }
+
+    const movie = [movies[movieIndex]]
+    return movie[0]
   }
 
   /**
@@ -105,7 +114,8 @@ export class MovieModel {
       ...input
     }
 
-    return movies[movieIndex]
+    const movie = [movies[movieIndex]]
+    return movie[0]
   }
 
   /**
@@ -118,9 +128,10 @@ export class MovieModel {
     /** @type {number} */
     const movieIndex = movies.findIndex(movie => movie.id === id)
 
-    if (movieIndex < 0) { return false }
+    if (movieIndex < 0) { return [] }
 
-    movies.slice(movieIndex, 1)
-    return true
+    const movie = [movies[movieIndex]]
+    movies.splice(movieIndex, 1)
+    return movie[0]
   }
 }

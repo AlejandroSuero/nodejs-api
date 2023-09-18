@@ -5,8 +5,10 @@
   "main": "src/app.ts",
   "type": "module",
   "scripts": {
-    "start": "node ./src/app.js",
-    "dev": "node --watch ./src/app.js",
+    "start": "pnpm install && pnpm run start:mysql",
+    "start:mysql": "node ./src/server-mysql.js",
+    "dev": "node --watch ./src/server-local.js",
+    "dev:mysql": "node --watch ./src/server-mysql.js",
     "lint": "pnpx eslint './**/*.{js,ts,jsx,tsx}'",
     "lint:fix": "pnpx eslint './**/*.{js,ts,jsx,tsx}'"
   },

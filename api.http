@@ -2,36 +2,36 @@
 GET http://localhost:3000/movies
 
 ### Get movie by id
-GET http://localhost:3000/movies/912521d0-54bd-11ee-a290-b99ce0903146
+GET http://localhost:3000/movies/dcdd0fad-a94c-4810-8acc-5f108d3b18c3
 
 ### Get movies by genre
-GET http://localhost:3000/movies?genre=sci-fi
+GET http://localhost:3000/movies?genre=drama
 
 ### Create a new movie
 POST http://localhost:3000/movies
 Content-Type: application/json
 
 {
-    "title": "Interstellar",
-    "year": 2014,
-    "director": "Christopher Nolan",
-    "duration": 169,
-    "poster": "https://m.media-amazon.com/images/I/91obuWzA3XL._AC_UF1000,1000_QL80_.jpg",
+    "title": "Pulp Fiction",
+    "year": 1994,
+    "director": "Quentin Tarantino",
+    "duration": 154,
+    "poster": "https://www.themoviedb.org/t/p/original/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg",
     "genre": [
-        "Adventure",
-        "Drama",
-        "Sci-Fi"
-    ]
+        "Crime",
+        "Drama"
+    ],
+    "rate": 8.9
 }
 
 ### Update a movie
-PATCH http://localhost:3000/movies/912521d0-54bd-11ee-a290-b99ce0903146
+PATCH http://localhost:3000/movies/dcdd0fad-a94c-4810-8acc-5f108d3b18c3
 Content-Type: application/json
 
 {
-    "year": 1993
+    "year": 2014
 }
 
 ### Delete a movie
-DELETE http://localhost:3000/movies/912520cc-54bd-11ee-a290-b99ce0903146
+DELETE http://localhost:3000/movies/dcdd0fad-a94c-4810-8acc-5f108d3b18c3
 
