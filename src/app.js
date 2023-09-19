@@ -1,4 +1,5 @@
 import express, { json } from "express"
+import "dotenv/config"
 
 import { createMovieRouter } from "./routes/movies.js"
 

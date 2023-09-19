@@ -1,7 +1,7 @@
 import mysql from "mysql2/promise"
 
 /** @type {mysql.ConnectionOptions} */
-const config = {
+const DEFAULT_CONFIG = {
   host: "localhost",
   user: "root",
   port: 3306,
@@ -9,7 +9,8 @@ const config = {
   database: "moviesDB"
 }
 
-const connection = await mysql.createConnection(config)
+const CONNECTION_CONFIG = process.env.DATABASE_URL ?? DEFAULT_CONFIG
+const connection = await mysql.createConnection(CONNECTION_CONFIG)
 
 /**
  * @typedef {
