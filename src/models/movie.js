@@ -13,7 +13,10 @@ import { readJSON } from "../utils.js"
 *  "Drama" |
 *  "Thriller" |
 *  "Comedy" |
-*  "Horror"
+*  "Horror" |
+*  "Romance" |
+*  "Animation" |
+*  "Biography"
 *  } Genre
  */
 

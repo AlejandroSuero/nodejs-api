@@ -1,6 +1,6 @@
 import mysql from "mysql2/promise"
+import crypto from "node:crypto"
 
-/** @type {mysql.ConnectionOptions} */
 const DEFAULT_CONFIG = {
   host: "localhost",
   user: "root",
@@ -23,7 +23,10 @@ const connection = await mysql.createConnection(CONNECTION_CONFIG)
  *  "Drama" |
  *  "Thriller" |
  *  "Comedy" |
- *  "Horror"
+ *  "Horror" |
+ *  "Romance" |
+ *  "Animation" |
+ *  "Biography"
  *  } Genre
  */
 
@@ -157,13 +160,18 @@ GROUP BY movie.id;
       rate
     } = input
     const [uuidResult] = await connection.query("SELECT UUID() uuid;")
-    const [{ uuid }] = uuidResult
+    let [{ uuid }] = uuidResult
+    const [uuidFromDB] = await connection.query("SELECT BIN_TO_UUID(id) id FROM movie WHERE id = UUID_TO_BIN(?)", uuid)
+    if (uuidFromDB.length > 0) {
+      if (uuid === uuidFromDB[0].id) uuid = crypto.randomUUID()
+    }
 
     const sql = `INSERT INTO movie (id, title, year, director, duration, poster, rate) VALUES
 (UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?);`
     try {
       await connection.query(sql, [uuid, title, year, director, duration, poster, rate])
     } catch (e) {
+      console.error(e)
       throw new Error("Error while creating movie")
     }
 
